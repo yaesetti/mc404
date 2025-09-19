@@ -1,120 +1,89 @@
-.globl _start
+.data
+    input: .skip 20
+    output: .skip 4
 
 .text
+_start:
+    jal read
+    jal sqrt
+
 read:
-    li a0, 0  # file descriptor = 0 (stdin)
-    la a1, input_address #  buffer to write the data
-    li a2, 20  # size (reads only 1 byte)
-    li a7, 63 # syscall read (63)
+    li a0, 0                   # file descriptor = 0 (stdin)
+    la a1, input               # buffer to write the data
+    li a2, 20                  # size (reads only 1 byte)
+    li a7, 63                  # syscall read (63)
     ecall
     ret
 
 write:
     li a0, 1                   # file descriptor = 1 (stdout)
-    la a1, output_address       # buffer
-    li a2, 20                   # size
+    la a1, output              # buffer
+    li a2, 1                   # size
     li a7, 64                  # syscall write (64)
     ecall
     ret
-
-str2int:
-    lbu t0, 0(s1) # 0xxx
-    lbu t1, 1(s1) # x0xx
-    lbu t2, 2(s1) # xx0x
-    lbu t3, 3(s1) # xxx0
-
-    addi t0, t0, -48
-    addi t1, t1, -48
-    addi t2, t2, -48
-    addi t3, t3, -48
-
-    li a3, 0
-    li t4, 10
-
-    mul a3, a3, t4
-    add a3, a3, t0
-
-    mul a3, a3, t4
-    add a3, a3, t1
-
-    mul a3, a3, t4
-    add a3, a3, t2
-
-    mul a3, a3, t4
-    add a3, a3, t3
-
-    ret
-
-int2str:
-    li t0, 1000
-    divu t1, a3, t0
-    remu a3, a3, t0
-
-    li t0, 100
-    divu t2, a3, t0
-    remu a3, a3, t0
-
-    li t0, 10
-    divu t3, a3, t0
-    remu a3, a3, t0
-
-    mv t4, a3
-
-    addi t1, t1, 48
-    addi t2, t2, 48
-    addi t3, t3, 48
-    addi t4, t4, 48
-
-    li t5, 32
-
-    sb t1, 0(s2)
-    sb t2, 1(s2)
-    sb t3, 2(s2)
-    sb t4, 3(s2)
-    sb t5, 4(s2)
-
-    ret
-
-sqrt:
-    li t4, 10             # t4 = 10
-    mv a4, a3             # a4 = y
-    mv a5, a3             # a5 = k = y
-    srli a5, a5, 1        # a5 = y/2
-
-    1:
-        divu a3, a4, a5   # a3 = y/k
-        add a3, a3, a5    # a3 = k + y/k
-        srli a3, a3, 1    # a3 = (k + y/k) / 2
-
-        addi t4, t4, -1   # decrements the identation counter [t4--]
-        bnez t4, 1b       # if (t4 != 0) {goto 1b}
-    1:
-
-    ret
-
-_start:
-    jal read
-
-    mv s0, a1
-    addi s0, s0, 20
     
-    la s1, input_address
-    la s2, output_address
+sqrt:
+    la a4, input
+    la a3, output
+    li t6, 4
+    3:  
+        li a1, 0                # número inputado
+        li t0, 4                # contador do loop
+        li t2, 1000
+        li t3, 10               # const t3 = 10
+        1:
+            lbu t1, 0(a4)
+            addi t1, t1, -'0'
+            mul t1, t1, t2
+            add a1, a1, t1
+            addi a4, a4, 1
 
-    1:
-        jal str2int # a3 = int(a3)
-        jal sqrt    # a3 = sqrt(a3)
-        jal int2str # s2 = str(a3)
-        addi a1, a1, 4 # a1 += 4
-        addi s1, s1, 5
-        addi s2, s2, 5
-        bne s0, a1, 1b
-    1:
+            divu t2, t2, t3
+            addi t0, t0, -1
+            bnez t0, 1b
+        1:
+        addi a4, a4, 1
+        li t0, 10
+        li t1, 2                # const t1 = 2
+        divu a2, a1, t1         # initial guess k = y/2
 
-    li t0, 10
-    lb t0, (s2)
+        2:
+            divu t3, a1, a2
+            add t3, t3, a2
+            divu a2, t3, t1
 
-    debug1:
+            addi t0, t0, -1
+            bnez t0, 2b
+        2:
+
+        li t0, 4
+        li t2, 1000
+        li t3, 10
+        mv t5, a2
+        4:  
+        debug1:
+            divu t4, t5, t2
+            remu t5, t5, t2
+            addi t4, t4, '0'
+            sb t4, 0(a3)
+            jal write
+
+            divu t2, t2, t3
+            addi t0, t0, -1
+            bnez t0, 4b
+        4:
+
+        li t1, ' '
+        sb t1, 0(a3)
+        jal write
+
+        addi t6, t6, -1
+        bnez t6, 3b
+    3:
+
+    li t1, '\n'
+    sb t1, 0(a3)
     jal write
 
     jal exit
@@ -123,7 +92,3 @@ exit:
     li a0, 0  # return code 0
     li a7, 93 # syscall exit (93)
     ecall
-
-.data
-input_address: .skip 20  # buffer
-output_address: .skip 20 # output buffer
