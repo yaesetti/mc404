@@ -24,7 +24,6 @@ _start:
     mv s1, a1                   # s1 saves the address of input_times
 
     jal unsigned2int
-    debug3:
     mv s5, a0                   # s5 = Ta
     addi s1, s1, 1
 
@@ -38,7 +37,6 @@ _start:
 
     jal unsigned2int
     mv s8, a0                   # s8 = Tr
-
 
     sub s5, s8, s5             # deltaA = Tr - Ta
     sub s6, s8, s6             # deltaB = Tr - Tb
@@ -56,23 +54,22 @@ _start:
     mul s7, s7, t0              # deltaC * 3
     div s7, s7, t1              # deltaC / 10 = Dc
 
-    mul s10, s3, s3             # t0 = Yb²
-    mul s11, s4, s4             # t1 = Xc²
+    mul s10, s3, s3             # s10 = Yb²
+    mul s11, s4, s4             # s11 = Xc²
     mul s5, s5, s5              # s5 = Da²
     mul s6, s6, s6              # s6 = Db²
     mul s7, s7, s7              # s7 = Dc²
 
-    debug7:
     li s9, 0
-    add s9, s9, s5             # s9 = X = Da²
-    add s9, s9, t1             # s9 = X = Da² + Xc²
-    sub s9, s9, s7             # s9 = X = Da² + Xc² - Dc²
+    add s9, s9, s5              # s9 = X = Da²
+    add s9, s9, s11             # s9 = X = Da² + Xc²
+    sub s9, s9, s7              # s9 = X = Da² + Xc² - Dc²
     add t1, s4, s4              # t1 = 2Xc
-    div s9, s9, t1             # s9 = X = (Da²+Xc²-Dc²) / 2Xc
+    div s9, s9, t1              # s9 = X = (Da²+Xc²-Dc²) / 2Xc
 
     mv a0, s9
 
-    la a1, output
+    la a3, output
     li t1, 1000
     li t2, 10
     li t6, 4
@@ -81,13 +78,13 @@ _start:
     blt t5, zero, 7f
 
     li t0, '+'
-    sb t0, 0(a1)
+    sb t0, 0(a3)
     jal write
     j 1f
 
     7:
         li t0, '-'
-        sb t0, 0(a1)
+        sb t0, 0(a3)
         sub t5, zero, t5
         jal write
 
@@ -95,7 +92,7 @@ _start:
         divu t4, t5, t1
         remu t5, t5, t1
         addi t4, t4, '0'
-        sb t4, 0(a1)
+        sb t4, 0(a3)
         jal write
 
         divu t1, t1, t2
@@ -104,19 +101,19 @@ _start:
     1:
 
     li t1, ' '
-    sb t1, 0(a1)
+    sb t1, 0(a3)
     jal write
 
     li s8, 0                    # s8 = Y
     add s8, s8, s5              # s8 = Y = Da²
-    add s8, s8, t0              # s8 = Y = Da² + Yb²
+    add s8, s8, s10             # s8 = Y = Da² + Yb²
     sub s8, s8, s6              # s8 = Y = Da² + Yb² - Db²
     add t0, s3, s3              # t0 = 2Yb
-    div s8, s8, t0             # s8 = Y = (Da²+Yb²-Db²) / 2Yb
+    div s8, s8, t0              # s8 = Y = (Da²+Yb²-Db²) / 2Yb
 
     mv a0, s8
     
-    la a1, output
+    la a3, output
     li t1, 1000
     li t2, 10
     li t6, 4
@@ -125,20 +122,21 @@ _start:
     blt t5, zero, 7f
 
     li t0, '+'
-    sb t0, 0(a1)
+    sb t0, 0(a3)
     jal write
     j 1f
 
     7:
         li t0, '-'
-        sb t0, 0(a1)
+        sb t0, 0(a3)
+        sub t5, zero, t5
         jal write
 
     1:
         divu t4, t5, t1
         remu t5, t5, t1
         addi t4, t4, '0'
-        sb t4, 0(a1)
+        sb t4, 0(a3)
         jal write
 
         divu t1, t1, t2
@@ -146,8 +144,8 @@ _start:
         bnez t6, 1b
     1:
 
-    li t1, ' '
-    sb t1, 0(a1)
+    li t1, '\n'
+    sb t1, 0(a3)
     jal write
     
     jal exit
@@ -201,7 +199,6 @@ unsigned2int:
     li t6, 4                    # contador do loop
     1:
         lbu t0, 0(s1)           # carrega o char
-        debug2:
         addi t0, t0, -'0'       # char -> int
         mul t0, t0, t1          # pega a potência de dez
         add a0, a0, t0         # soma ao número int
