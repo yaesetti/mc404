@@ -4,6 +4,9 @@
     output: .skip 12
 
 .text
+
+.globl _start
+
 _start:
     la a1, input_coord
     li a2, 12
