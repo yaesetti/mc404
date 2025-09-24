@@ -3,6 +3,9 @@
     output: .skip 4
 
 .text
+
+.globl _start
+
 _start:
     jal read
     jal sqrt
