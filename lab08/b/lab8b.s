@@ -22,18 +22,8 @@ read:
     li a2, 263000           # number of chars
     li a7, 63               # syscall read (63)
     ecall
-
-    addi s3, s3, 3          # skips P5\n
     ret
 
-until_not_ws:
-    lbu t0, 0(s3)
-    li t1, '0'
-    bge t0, t1, 1f
-    addi s3, s3, 1
-    j until_not_ws
-    1:
-        ret
 
 set_canvas:
     mv a0, s1
@@ -46,6 +36,46 @@ set_pixel:
     li a7, 2200
     ecall
     ret
+
+until_not_ws:
+    lbu t0, 0(s3)
+    li t1, 33
+    blt t0, t1, skip_ws
+    li t2, '#'
+    beq t0, t2, skip_comment
+    ret
+
+    skip_ws:
+        addi s3, s3, 1
+        j until_not_ws
+
+    skip_comment:
+    1:
+        lbu t0, 0(s3)
+        li t2, '\n'
+        beq t0, t2, after_comment
+        addi s3, s3, 1
+        j 1b
+        after_comment:
+            addi s3, s3, 1
+            j until_not_ws
+
+read_decimal:
+    li a0, 0
+    rd_loop:
+        lbu t0, 0(s3)
+        li t1, '0'
+        li t2, '9'
+        blt t0, t1, rd_done
+        bgt t0, t2, rd_done
+        addi t0, t0, -'0'
+        li t3, 10
+        mul a0, a0, t3
+        add a0, a0, t0
+        addi s3, s3, 1
+        j rd_loop
+    rd_done:
+        ret
 
 calculate_filter:
     mv a1, s3
@@ -115,45 +145,29 @@ _start:
     li s1, 0                # image width
     li s2, 0                # image height
 
-    la s3, buffer
-
     mv a0, s0
     jal read
 
+    la s3, buffer
+
     jal until_not_ws
+    addi s3, s3, 1
 
-    1:
-        lbu t0, 0(s3)
-        addi t0, t0, -'0'
-
-        li t1, 10
-        mul s1, s1, t1
-        add s1, s1, t0
-
-        addi s3, s3, 1
-        lbu t0, 0(s3)
-        li t2, '0'
-        bge t0, t2, 1b
-    1:
+    jal until_not_ws
+    addi s3, s3, 1
 
     jal until_not_ws
 
-    1:
-        lbu t0, 0(s3)
-        addi t0, t0, -'0'
-
-        li t1, 10
-        mul s2, s2, t1
-        add s2, s2, t0
-
-        addi s3, s3, 1
-        lbu t0, 0(s3)
-        li t2, '0'
-        bge t0, t2, 1b
-    1:
+    jal read_decimal
+    mv s1, a0
 
     jal until_not_ws
-    addi s3, s3, 3          # skips 255
+
+    jal read_decimal
+    mv s2, a0
+
+    jal until_not_ws
+    jal read_decimal
     jal until_not_ws
 
     jal set_canvas
