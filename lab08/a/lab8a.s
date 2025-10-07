@@ -24,7 +24,6 @@ read:
     ecall
     ret
 
-
 set_canvas:
     mv a0, s1
     mv a1, s2
