@@ -168,7 +168,7 @@ _start:
 
     jal until_not_ws
     jal read_decimal
-    jal until_not_ws
+    addi s3, s3, 1
 
     jal set_canvas
 
