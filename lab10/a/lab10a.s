@@ -155,10 +155,10 @@ itoa:
     li t1, 10
     beq a2, t1, dec_base
 
+    2:
     la t1, temp_buffer          # will store the inverted number
 
     li t6, 0                    # counter
-    2:
     1:
         beqz a0, 1f             # stops when a0 == 0
         remu t3, a0, a2          # gets the first digit
