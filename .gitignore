@@ -1,5 +1,8 @@
 # MacOS native files
 *.DS_Store
 
-#VSCode native directory
+# VSCode native directory
 .vscode
+
+# 1s2026 PAD directory
+pad/
